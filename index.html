@@ -9,10 +9,7 @@
 <link rel='stylesheet' href='styles.css'>
 </head>
 <body>
-<a class='skip' href='#abstract'>Skip to content</a>
 <header class='masthead'>
-<nav class='nav' aria-label='Sections'><a href='#abstract'>Abstract</a><a href='#diagnosis'>Diagnosis</a><a href='#candidates'>Candidates</a><a href='#method'>Method</a><a href='#cases'>Cases</a><a href='#results'>Results</a><a href='#cite'>Cite</a></nav>
-<p class='kicker'>Research preprint 2026</p>
 <h1>CriticJEPA<span>World Models Are Better Critics Than Optimizers</span></h1>
 <p class='authors'>Xvyuan Liu<sup>1*</sup>, Jianjie Fang<sup>1*</sup>, Honglin Zhang<sup>1*</sup>, Zhaolu Wang<sup>2</sup>, Xin Zhang<sup>3</sup>, Wei Wu<sup>3</sup>, Fengli Xu<sup>1</sup>, Chen Gao<sup>1†</sup>, Yong Li<sup>1†</sup></p>
 <p class='affil'><sup>1</sup> Tsinghua University <span aria-hidden='true'>·</span> <sup>2</sup> Zhongguancun Academy <span aria-hidden='true'>·</span> <sup>3</sup> Manifold AI</p>
@@ -31,35 +28,55 @@
 
 <section id='diagnosis' class='sec'>
 <h2>The score improves. Execution stalls.</h2>
-<p class='lede'>Early gradient steps improve the executed plan. Continued search lowers the model’s predicted error while the executed error levels off. The gap shows how search can favor actions that the model scores too optimistically.</p>
+<p class='lede'>Early search improves execution. Later search lowers predicted error but not executed error, so search can exploit prediction errors.</p>
 <figure class='fig'>
 <div class='steps' role='group' aria-label='Gradient step'><span>Gradient steps</span><button data-step='0'>0</button><button data-step='1'>10</button><button data-step='2'>30</button><button data-step='3'>90</button></div>
 <div class='chartwrap'><svg id='diagChart' viewBox='0 0 640 340' role='img' aria-labelledby='dcT dcD'><title id='dcT'>Endpoint error versus gradient steps</title><desc id='dcD'>Executed endpoint error is 25.3, 23.0, 22.8 and 23.4 at 0, 10, 30 and 90 steps. Predicted error is 16.7, 9.5, 7.1 and 6.7. CriticJEPA-0 reference is 20.2.</desc></svg></div>
 <p id='diagRead' class='readout' aria-live='polite'>After 90 steps, executed error is 23.4 while predicted error is 6.7.</p>
-<figcaption>Endpoint error on 720 saved AntMaze states with one frozen three-level H-JEPA hierarchy. Each candidate is executed from the same reset state over a matched window. The dashed line shows the executed error after forward selection over 100 direct proposals.</figcaption>
+<figcaption>720 matched AntMaze states. The dashed line shows forward selection over 100 proposals.</figcaption>
 </figure>
 </section>
 
 <section id='candidates' class='sec'>
 <h2>Better choices start with better candidates</h2>
-<p class='lede'>A model needs useful relative scores to compare a set of plans. To build plans through optimization, it also needs reliable directions for changing the actions. The same frozen predictor gives very different rankings depending on what it is asked to compare.</p>
+<p class='lede'>Ranking a set of plans and finding better actions require different things from the same model.</p>
 <figure class='fig'>
 <div class='cands'>
-<div class='crow hj'><h3>H-JEPA search outputs</h3><dl><div><dt>Rank corr. ρ</dt><dd>−0.03</dd></div><div><dt>Top-1</dt><dd>12.0%</dd></div><div><dt>Selected error</dt><dd>24.3</dd></div></dl></div>
-<div class='crow rt'><h3>Dataset retrieval <small>start state only</small></h3><dl><div><dt>Rank corr. ρ</dt><dd>0.41</dd></div><div><dt>Top-1</dt><dd>27.0%</dd></div><div><dt>Selected error</dt><dd>30.1</dd></div></dl></div>
-<div class='crow cj'><h3>Goal-conditioned flow proposals</h3><dl><div><dt>Rank corr. ρ</dt><dd>0.28</dd></div><div><dt>Top-1</dt><dd>22.0%</dd></div><div><dt>Selected error</dt><dd><strong>23.0</strong></dd></div></dl></div>
+<div class='crow hj'><h3>H-JEPA search outputs</h3><dl><div><dt>Rank corr. ρ</dt><dd>−0.03</dd></div><div><dt>Selected error</dt><dd>24.3</dd></div></dl></div>
+<div class='crow rt'><h3>Dataset retrieval <small>start state only</small></h3><dl><div><dt>Rank corr. ρ</dt><dd>0.41</dd></div><div><dt>Selected error</dt><dd>30.1</dd></div></dl></div>
+<div class='crow cj'><h3>Goal-conditioned flow proposals</h3><dl><div><dt>Rank corr. ρ</dt><dd>0.28</dd></div><div><dt>Selected error</dt><dd><strong>23.0</strong></dd></div></dl></div>
 </div>
-<p class='takeaway'>Retrieved actions rank most consistently, yet the chosen action ends with an error of <strong>30.1</strong>. Giving the critic goal-conditioned candidates brings that error down to <strong>23.0</strong>. Ranking measures the whole pool. Control depends on the plan that gets selected.</p>
-<figcaption>Exact reset tests on 300 AntMaze states with eight candidates per source. Top-1 chance is 12.5%. Lower selected error is better.</figcaption>
+<p class='takeaway'>Retrieval ranks more consistently, yet flow candidates lead to better chosen plans. A critic can only choose among the plans it is given.</p>
+<figcaption>300 matched AntMaze states, eight candidates per source. Lower execution error is better.</figcaption>
 </figure>
 </section>
 
 <section id='method' class='sec'>
 <h2>Give the world model a choice</h2>
-<p class='lede'>A goal-conditioned flow head learns candidate plans from reward-free trajectories at each level. The frozen model predicts their outcomes and picks one in a final forward pass.</p>
-<ol class='flow' aria-label='Inference order'><li><b>Propose</b><span>flow head samples goal-directed candidates</span></li><li class='opt'><b>Polish</b><span>optional short anchored updates per candidate</span></li><li><b>Verify and select</b><span>frozen rollouts score every candidate</span></li></ol>
-<figure class='fig wide'><img src='assets/method.webp' alt='CriticJEPA method diagram. At each hierarchy level a flow head proposes plans, optional anchored updates refine them, and the frozen world model scores rollouts to select one. Selected macro-actions become subgoals for lower levels and primitive controls run at the bottom.' loading='lazy'><figcaption>Selected high-level macro-actions yield subgoals for the level below. Primitive controls are applied at the bottom. The forward-only mode is already a complete planner, and every world-model weight stays frozen.</figcaption></figure>
-<p class='aside'>H-JEPA provides the frozen hierarchy and the gradient planner for comparison. The design principle is about how planners use learned predictions. Generate goal-directed alternatives, use the model to compare them, and reserve gradients for local corrections.</p>
+<p class='lede'>A goal-conditioned generator proposes plans, brief anchored updates refine them, and the critic picks one. The world model stays frozen, and zero updates already form a complete planner.</p>
+<ol class='flow' aria-label='Inference order'><li><b>Propose</b><span>flow head samples goal-directed candidates</span></li><li class='opt'><b>Polish</b><span>short anchored corrections</span></li><li><b>Verify and select</b><span>frozen rollouts score every candidate</span></li></ol>
+<figure class='fig wide'><img src='assets/method.webp' alt='CriticJEPA method diagram. At each hierarchy level a flow head proposes plans, optional anchored updates refine them, and the frozen world model scores rollouts to select one. Selected macro-actions become subgoals for lower levels and primitive controls run at the bottom.' loading='lazy'><figcaption>High-level choices set subgoals for the levels below.</figcaption></figure>
+<p class='aside'>H-JEPA is our testbed. The distinction between comparing plans and optimizing them applies to planning with any learned predictor.</p>
+</section>
+
+<section id='results' class='sec'>
+<h2>More goals with less planning compute</h2>
+<p class='lede'>Each setting reports three models. We test 18 frozen world models across four environments with shared planning settings.</p>
+<figure class='fig'>
+<h3>Standard AntMaze, three levels</h3>
+<div class='bars'>
+<div class='bar hj'><span class='bl'>H-JEPA</span><span class='bt'><i style='--w:67.6%'></i></span><span class='bv'>67.6%<small>131.0 TFLOPs</small></span></div>
+<div class='bar c0'><span class='bl'>CriticJEPA-0</span><span class='bt'><i style='--w:78.7%'></i></span><span class='bv'>78.7%<small>1.62 TFLOPs</small></span></div>
+<div class='bar cj'><span class='bl'>CriticJEPA-5</span><span class='bt'><i style='--w:89.1%'></i></span><span class='bv'>89.1%<small>5.11 TFLOPs</small></span></div>
+</div>
+<p class='takeaway'><strong>+21.5 percentage points at about 1/26 of the planning compute</strong> with five refinement steps. A small forward-only pool reaches 68.7% with 0.36 TFLOPs, about 1/360 of the H-JEPA budget.</p>
+<figcaption>TFLOPs per episode. CriticJEPA-0 and CriticJEPA-5 use different proposal budgets.</figcaption>
+</figure>
+<div class='task-results'>
+<div><h3>Push-T, two levels</h3><p><strong>43.3% → 57.3%</strong><span>About 1/79 of the H-JEPA planning compute</span></p></div>
+<div><h3>Push-T, three levels</h3><p><strong>9.3% → 22.7%</strong><span>About 1/13 of the H-JEPA planning compute</span></p></div>
+<div><h3>Cube and FourRoom</h3><p><strong>100%</strong><span>Success with forward selection</span></p></div>
+</div>
 </section>
 
 <section id='cases' class='sec'>
@@ -70,7 +87,7 @@
 <div class='steps' role='group' aria-label='Restart view'><button data-run='0'>Run 1</button><button data-run='1'>Run 2</button><button data-run='2'>Run 3</button><button data-run='3'>Any of three</button></div>
 <ol id='grid' class='grid' aria-label='50 tasks in original order'></ol>
 <p id='runRead' class='readout' aria-live='polite'>Any of three: 46/50 tasks solved.</p>
-<figcaption>On the fixed diagnostic model, each run solves 72% of tasks on average. Across all three runs, 46 of 50 distinct tasks are solved at least once. <span class='key'><i class='ok'></i> solved <i class='no'></i> failed</span></figcaption>
+<figcaption>A single run averages 72% success. Three runs together cover 92% of tasks. <span class='key'><i class='ok'></i> solved <i class='no'></i> failed</span></figcaption>
 </figure>
 <figure class='fig'>
 <h3>Short corrections on a fixed pool</h3>
@@ -82,49 +99,11 @@
 <polyline class='kline' points='40,142 66,67.1 105,76.9 170,90.9 300,95.1'/>
 <g class='kpts'><circle cx='40' cy='142' r='4'/><circle cx='66' cy='67.1' r='5'/><circle cx='105' cy='76.9' r='4'/><circle cx='170' cy='90.9' r='4'/><circle cx='300' cy='95.1' r='4'/></g>
 <g class='klab'><text x='40' y='130'>84.0</text><text x='66' y='55'>94.7</text><text x='105' y='65'>93.3</text><text x='170' y='79'>91.3</text><text x='300' y='83'>90.7</text><text x='40' y='185'>0</text><text x='66' y='185'>2</text><text x='105' y='185'>5</text><text x='170' y='185'>10</text><text x='300' y='185'>20</text></g></svg>
-<figcaption>Two anchored steps bring success from 84.0% to 94.7% with the model and candidate count fixed. <a href='assets/polish.webp'>See the full refinement and execution budget results</a>.</figcaption>
+<figcaption>Two steps raise success from 84.0% to 94.7% with the model and pool size fixed.</figcaption>
 </figure>
 </div>
-<ul class='notes'><li><b>AntMaze</b> Different restarts solve different tasks with the same model. Proposals and forward selection recover more of that capability in one run.</li><li><b>Push-T</b> With three levels, success rises from 9.3% to 22.7%. The advantage persists through 150 execution steps.</li><li><b>Cube and FourRoom</b> Forward selection reaches 100% on both tasks. Goal-conditioned proposals already supply successful plans.</li></ul>
-</section>
-
-<section id='results' class='sec'>
-<h2>More goals with less planning compute</h2>
-<p class='lede'>Three independently trained frozen predictors per setting, 18 in total, with shared planning settings. Values are average success %.</p>
-<figure class='fig'>
-<h3>Standard AntMaze, three levels</h3>
-<div class='bars'>
-<div class='bar hj'><span class='bl'>H-JEPA</span><span class='bt'><i style='--w:67.6%'></i></span><span class='bv'>67.6%<small>131.0 TFLOPs</small></span></div>
-<div class='bar c0'><span class='bl'>CriticJEPA-0</span><span class='bt'><i style='--w:78.7%'></i></span><span class='bv'>78.7%<small>1.62 TFLOPs</small></span></div>
-<div class='bar cj'><span class='bl'>CriticJEPA-5</span><span class='bt'><i style='--w:89.1%'></i></span><span class='bv'>89.1%<small>5.11 TFLOPs</small></span></div>
-</div>
-<p class='takeaway'><strong>+21.5 percentage points at about 1/26 of the planning compute</strong> with five refinement steps. A small forward-only pool reaches 68.7% with 0.36 TFLOPs, about 1/360 of the H-JEPA budget.</p>
-<figcaption>TFLOPs per episode. CriticJEPA-0 and CriticJEPA-5 use different proposal budgets.</figcaption>
-</figure>
-<div class='tablewrap'><table><caption>Average success % across three frozen models per setting</caption><thead><tr><th scope='col'>Setting</th><th scope='col'>H-JEPA</th><th scope='col'>CriticJEPA-0</th><th scope='col'>CriticJEPA-5</th><th scope='col'>Compute ratio</th></tr></thead><tbody>
-<tr><th scope='row'>AntMaze L3</th><td>67.6</td><td>78.7</td><td class='best'>89.1</td><td>26×</td></tr>
-<tr><th scope='row'>AntMaze L3, unseen tasks</th><td>74.7</td><td>87.3</td><td class='best'>92.0</td><td>·</td></tr>
-<tr><th scope='row'>Push-T L2</th><td>43.3</td><td>52.0</td><td class='best'>57.3</td><td>79×</td></tr>
-<tr><th scope='row'>Push-T L3</th><td>9.3</td><td>18.7</td><td class='best'>22.7</td><td>13×</td></tr>
-<tr><th scope='row'>Cube L2</th><td>49.3</td><td class='best'>100</td><td>92.0</td><td>44×</td></tr>
-<tr><th scope='row'>Cube L3</th><td>48.7</td><td class='best'>100</td><td class='best'>100</td><td>50×</td></tr>
-<tr><th scope='row'>FourRoom L3</th><td>96.0</td><td class='best'>100</td><td class='best'>100</td><td>14×</td></tr>
-</tbody></table></div>
-<p class='small'>L2 and L3 denote hierarchy depth. Compute ratio is H-JEPA over CriticJEPA-5, five-step configuration only.</p>
 </section>
 </main>
-<footer id='cite' class='sec foot'>
-<h2>Citation</h2>
-<pre id='bib' tabindex='0'>@misc{liu2026criticjepa,
-  title  = {CriticJEPA: World Models Are Better Critics Than Optimizers},
-  author = {Liu, Xvyuan and Fang, Jianjie and Zhang, Honglin and Wang, Zhaolu and Zhang, Xin and Wu, Wei and Xu, Fengli and Gao, Chen and Li, Yong},
-  year   = {2026},
-  note   = {Preprint},
-  url    = {https://daybraeklaxry.github.io/criticjepa/}
-}</pre>
-<button id='copy' class='copy'>Copy BibTeX</button> <span id='copyMsg' class='small' aria-live='polite'></span>
-<p class='small'>Tsinghua University, Zhongguancun Academy and Manifold AI.</p>
-</footer>
 <script src='app.js'></script>
 </body>
 </html>
