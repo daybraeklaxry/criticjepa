@@ -300,7 +300,9 @@ h1{margin:0;font:800 clamp(64px,11vw,140px)/.95 var(--sans);letter-spacing:-.055
   .drow{grid-template-columns:96px 1fr 50px;gap:10px}
   .drow .env{font-size:15.5px}.drow .env small{font-size:14px}.drow .ratio{font-size:22px}
   .keys .rk{margin-left:0}
-  .morebtns{display:grid;grid-template-columns:1fr 1fr;width:100%}
+  .morebtns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);width:100%}
+  .morebtn{min-width:0;padding:6px 8px 6px 6px;column-gap:8px}
+  .morebtn span{font-size:15px}.morebtn small{font-size:13.5px}
   .morebtn img{width:48px;height:34px}
   .morestrip{padding:16px}
   .hrow{grid-template-columns:1fr 92px;gap:8px 12px}
