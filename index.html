@@ -77,9 +77,7 @@
 </section>
 <figure class="fig col-fig">
   <div class="figbody">
-    <div class="seg" role="group" aria-label="Restart" id="runSeg"><button data-run="0">Run 1</button><button data-run="1">Run 2</button><button data-run="2">Run 3</button><button data-run="3" aria-pressed="true">Any of three</button></div>
-    <p class="big-read" id="runRead" aria-live="polite"></p>
-    <ol id="grid" class="grid" aria-label="50 AntMaze tasks in original order"></ol>
+    <div class="runwrap"><div><p class="big-read" id="runRead" aria-live="polite"></p><ol id="grid" class="grid" aria-label="50 AntMaze tasks in original order"></ol></div><div class="runs" role="group" aria-label="Choose a run" id="runSeg"></div></div>
   </div>
   <figcaption><span class="sw ink"></span>solved <span class="sw out"></span>failed. One frozen H-JEPA model, 50 official tasks. "Any of three" is coverage across restarts, not the success rate of a single run.</figcaption>
 </figure>
@@ -183,8 +181,8 @@
 
 <section class="col chapter">
   <p class="num">06</p>
-  <h2>Beyond navigation</h2>
-  <p>The same recipe, with the same settings, on contact-rich pushing and robotic manipulation.</p>
+  <h2>Other environments</h2>
+  <p>The same recipe and the same planning settings on contact-rich pushing, robotic manipulation, and room-to-room navigation with a distractor.</p>
 </section>
 <div class="wide-fig two" id="moreDemos"></div>
 

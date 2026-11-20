@@ -87,16 +87,25 @@ for (const d of MORE) {
 const RUNS = ['01111101111111001101000101101001110011111111011101', '11010111011011111111100111111011111011111111011101', '11011111111110111101110011110000010111011111011000'];
 const grid = $('#grid');
 for (let t = 0; t < 50; t++) grid.append(document.createElement('li'));
+const RUN_LABELS = ['Run 1', 'Run 2', 'Run 3', 'Any of the three'];
+const solvedBy = (k, t) => (k === 3 ? RUNS.some((r) => r[t] === '1') : RUNS[k][t] === '1');
+const counts = [0, 1, 2, 3].map((k) => Array.from({ length: 50 }, (_, t) => solvedBy(k, t)).filter(Boolean).length);
+const runSeg = $('#runSeg');
+counts.forEach((n, k) => {
+  const b = document.createElement('button');
+  b.dataset.run = k; b.className = 'runbar' + (k === 3 ? ' union' : '');
+  b.innerHTML = `<span class="rl">${RUN_LABELS[k]}</span><span class="rt"><i style="width:${(100 * n) / 50}%"></i></span><span class="rn">${2 * n}%</span>`;
+  b.addEventListener('click', () => drawRuns(k));
+  runSeg.append(b);
+});
+const runNote = document.createElement('p'); runNote.className = 'runnote';
+runNote.innerHTML = `One run solves <b>${Math.round((2 * (counts[0] + counts[1] + counts[2])) / 3)}%</b> on average. Together the three solve <b>${2 * counts[3]}%</b>.`;
+runSeg.append(runNote);
 function drawRuns(k) {
-  let n = 0;
-  $$('li', grid).forEach((li, t) => {
-    const ok = k === 3 ? RUNS.some((r) => r[t] === '1') : RUNS[k][t] === '1';
-    n += ok; li.className = ok ? 's' : 'f'; li.setAttribute('aria-label', `Task ${t + 1} ${ok ? 'solved' : 'failed'}`);
-  });
-  $('#runRead').innerHTML = k === 3 ? `Any of three runs: <b>${n} of 50</b> tasks` : `Run ${k + 1}: <b>${n} of 50</b> tasks`;
-  press($$('#runSeg button'), (b) => Number(b.dataset.run) === k);
+  $$('li', grid).forEach((li, t) => { const ok = solvedBy(k, t); li.className = ok ? 's' : 'f'; li.setAttribute('aria-label', `Task ${t + 1} ${ok ? 'solved' : 'failed'}`); });
+  $('#runRead').innerHTML = `${RUN_LABELS[k]}: <b>${counts[k]} of 50</b> tasks`;
+  press($$('.runbar', runSeg), (b) => Number(b.dataset.run) === k);
 }
-$$('#runSeg button').forEach((b) => b.addEventListener('click', () => drawRuns(Number(b.dataset.run))));
 drawRuns(3);
 
 /* ================= 02 optimism ================= */

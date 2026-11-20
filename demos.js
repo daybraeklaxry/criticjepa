@@ -10,6 +10,6 @@ const moreClip = (id, fps, budget, hit) => ({ src: `assets/clips/${id}.mp4`, pos
 window.MORE_DEMOS = [
   { ...moreClip('pusht-024', 15, 90, 75), title: 'Push-T', caption: 'Push the T onto its outline within 90 steps. Contact-rich and unforgiving.' },
   { ...moreClip('cube-009', 8, 30, 14), title: 'Cube', caption: 'Reach, grasp and move the cube to the goal pose within 30 steps.' },
+  { src: 'assets/clips/fourroom.mp4', poster: 'assets/clips/fourroom-poster.jpg', goal: 'assets/clips/fourroom-goal.png', fps: 20, budget: 210, hit: 171, title: 'FourRoom', caption: 'Steer the red agent into the gold ring through narrow doorways within 210 steps. The blue dot is a distractor. Here CriticJEPA-0 uses no gradient steps at all.' },
   { ...moreClip('pusht-015', 15, 90, 83), title: 'Push-T, another start', caption: 'Same frozen model, same settings, a different start.' },
-  { ...moreClip('cube-030', 8, 30, 16), title: 'Cube, another start', caption: 'Same frozen model, same settings, a different start.' },
 ];
