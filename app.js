@@ -106,6 +106,18 @@ for (const [k, label, icon] of ENVS) {
   b.addEventListener('click', () => showEnv(k)); tabs.append(b);
 }
 if (ENVS.length) showEnv(ENVS[0][0]);
+// Teaser under the hero: point readers to the gallery and open the chosen environment.
+const moreBtns = $('#moreBtns');
+const moreTotal = ENVS.reduce((n, [k]) => n + (k === 'maze' ? G[k].length - 4 : G[k].length), 0);
+$('#moreCount').textContent = `${moreTotal} more rollouts`;
+for (const [k, label, icon] of ENVS) {
+  const items = k === 'maze' ? G[k].slice(4) : G[k];
+  const b = document.createElement('button');
+  b.className = 'morebtn';
+  b.innerHTML = `<img src="${items[0].poster}" alt=""><span>${useIcon(icon)}${label}</span><small>${items.length} clips</small>`;
+  b.addEventListener('click', () => { showEnv(k); document.getElementById('gallery').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' }); });
+  moreBtns.append(b);
+}
 const step = () => ($('.gcard', track)?.getBoundingClientRect().width || 500) + 20;
 $('#carPrev').addEventListener('click', () => track.scrollBy({ left: -step() }));
 $('#carNext').addEventListener('click', () => track.scrollBy({ left: step() }));
