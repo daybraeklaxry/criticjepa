@@ -126,8 +126,7 @@
     <p class="pcap">Lower is better. The green line is CriticJEPA-0: choosing among 100 proposals with no gradient steps at all beats every amount of search.</p>
   </div>
   <div class="why">
-    <div class="eq" aria-label="minus gradient of predicted cost equals minus gradient of true cost plus gradient of epsilon"><span>−∇C<sub>pred</sub></span><span class="o">=</span><span class="g">−∇C<sub>true</sub></span><span class="o">+</span><span class="r">∇ε</span></div>
-    <p class="eqkey"><span class="g">real progress</span><span class="r">progress at fooling the model</span></p>
+    <figure class="eqfig"><img src="assets/eq-gradient.svg" alt="Minus the gradient of the predicted cost equals minus the gradient of the true cost, which is real progress, plus the gradient of the model error epsilon, which is progress at fooling the model."></figure>
     <p>Write the predicted cost as the true cost minus the model's error ε. Every gradient step follows both directions, and nothing stops it from following the second. The trace is visible in the maze: failed runs put their subgoals near or inside walls about twice as often.</p>
     <div class="wall">
       <div class="wrow head"><span></span><span>Successful runs</span><span>Failed runs</span></div>
@@ -160,7 +159,7 @@
 </section>
 <section class="wideblock">
   <div class="panel">
-    <div class="seg" role="group" aria-label="Planner" id="mSeg"><button data-mode="opt" aria-pressed="true">Optimize with gradients</button><button data-mode="sel">Propose and select</button><button class="replay" id="mPlay">Replay</button></div>
+    <div class="seg" role="group" aria-label="Planner" id="mSeg"><button data-mode="opt" aria-pressed="true">Optimize with gradients</button><button data-mode="sel">Propose and select</button><button class="replay" id="mPlay">Pause</button></div>
     <div class="mwrap">
       <svg id="mSvg" viewBox="0 0 660 340" role="img" aria-labelledby="mT"><title id="mT">Schematic comparison on the AntMaze layout. Gradient optimization bends one plan straight at the goal until its imagined subgoals sit inside walls while the predicted error keeps falling. Proposal and selection draws several plans along the corridors and the frozen model picks the best.</title></svg>
       <div class="mtext"><p class="mh" id="mHead"></p><p id="mBody"></p></div>

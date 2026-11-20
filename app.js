@@ -263,17 +263,29 @@ function drawSel(phase) {
   $('#mHead').textContent = 'Propose, then select';
   $('#mBody').textContent = 'The proposer learned from real trajectories, so its plans follow the corridors. The frozen model only compares them and keeps the best. Its first part runs, then everything replans.';
 }
-function runMethod(mode) {
-  clearTimeout(mTimer); mMode = mode; press($$('#mSeg [data-mode]'), (b) => b.dataset.mode === mode);
-  const frames = mode === 'opt' ? [0, 1, 2, 3] : [0, 1, 2], draw = mode === 'opt' ? drawOpt : drawSel;
-  if (reduced) return draw(frames[frames.length - 1]);
-  let k = 0; const go = () => { draw(frames[k]); if (++k < frames.length) mTimer = setTimeout(go, 1200); }; go();
+// Loops forever while visible: optimize (4 frames) -> hold -> propose and select (3 frames) -> hold -> repeat.
+const SEQ = { opt: [0, 1, 2, 3], sel: [0, 1, 2] };
+let mFrame = 0, mPaused = false, mVisible = false;
+function showMethod() {
+  press($$('#mSeg [data-mode]'), (b) => b.dataset.mode === mMode);
+  (mMode === 'opt' ? drawOpt : drawSel)(SEQ[mMode][mFrame]);
 }
+function tickMethod() {
+  clearTimeout(mTimer);
+  if (mPaused || !mVisible || reduced) return;
+  const last = mFrame === SEQ[mMode].length - 1;
+  mTimer = setTimeout(() => {
+    if (last) { mMode = mMode === 'opt' ? 'sel' : 'opt'; mFrame = 0; } else mFrame += 1;
+    showMethod(); tickMethod();
+  }, last ? 3200 : 1200);
+}
+function setMPlay() { $('#mPlay').textContent = mPaused ? 'Play' : 'Pause'; }
+function runMethod(mode) { mMode = mode; mFrame = reduced ? SEQ[mode].length - 1 : 0; showMethod(); tickMethod(); }
 $$('#mSeg [data-mode]').forEach((b) => b.addEventListener('click', () => runMethod(b.dataset.mode)));
-$('#mPlay').addEventListener('click', () => runMethod(mMode));
-let mStarted = false;
-new IntersectionObserver(([e]) => { if (e.isIntersecting && !mStarted) { mStarted = true; runMethod('opt'); } }, { threshold: 0.5 }).observe(mSvg);
-drawOpt(0);
+$('#mPlay').addEventListener('click', () => { mPaused = !mPaused; setMPlay(); tickMethod(); });
+setMPlay();
+new IntersectionObserver(([e]) => { mVisible = e.isIntersecting; tickMethod(); }, { threshold: 0.4 }).observe(mSvg);
+showMethod();
 
 /* ================= results ================= */
 const PTS = [
@@ -299,7 +311,7 @@ function drawScatter() {
     svg(sc, 'circle', { cx: lx(p.x), cy: ly(p.y), r: p.k === 'c5' || p.k === 'hj' ? 8 : 6, fill: st[0], stroke: st[1], 'stroke-width': 2.4 });
   }
   const lab = (p, dx, dy, a, cls, txt) => svg(sc, 'text', { x: lx(p.x) + dx, y: ly(p.y) + dy, 'text-anchor': a, class: cls || '' }, txt || `${p.n} ${p.y}`);
-  lab(PTS[0], 0, 26, 'middle', 'strong'); lab(PTS[1], 12, 5, 'start'); lab(PTS[3], 12, 20, 'start'); lab(PTS[5], 0, -16, 'middle', 'strong');
+  lab(PTS[0], 0, 26, 'middle', 'strong'); lab(PTS[1], 12, 5, 'start'); lab(PTS[3], 12, 20, 'start'); lab(PTS[5], 6, 30, 'start', 'strong');
   lab(PTS[2], 10, 22, 'start', '', 'Matches H-JEPA at 1/360 compute');
 }
 const KS = [0, 2, 5, 10, 20], KV = [84.0, 94.7, 93.3, 91.3, 90.7];

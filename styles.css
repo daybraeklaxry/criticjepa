@@ -167,6 +167,8 @@ h1{margin:0;font:800 clamp(64px,11vw,140px)/.95 var(--sans);letter-spacing:-.055
 .why p{margin:0 0 20px}
 .eq{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:center;gap:14px;font:600 clamp(28px,3.6vw,40px)/1.2 var(--sans);letter-spacing:-.01em;color:var(--ink)}
 .eq .o{color:var(--text2)}.eq .g{color:var(--cj)}.eq .r{color:var(--hj)}
+.eqfig{margin:8px 0 30px;text-align:center}
+.eqfig img{width:min(100%,640px);height:auto}
 .eqkey{display:flex;justify-content:center;gap:34px;margin:8px 0 26px!important;font:600 17px/1.4 var(--sans)}
 .eqkey .g{color:var(--cj)}.eqkey .r{color:var(--hj)}
 .wall{font:500 17px/1.4 var(--sans);color:var(--ink)}
