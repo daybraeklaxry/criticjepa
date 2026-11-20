@@ -6,12 +6,12 @@
 <title>CriticJEPA: World Models Are Better Critics Than Optimizers</title>
 <meta name="description" content="A frozen world model is a reliable judge of plans long after its gradients stop being a reliable guide. CriticJEPA lets it judge.">
 <meta property="og:title" content="CriticJEPA: World Models Are Better Critics Than Optimizers">
-<meta property="og:description" content="+21.5 points on Visual AntMaze at 1/26 of the planning compute. Every world-model weight stays frozen.">
+<meta property="og:description" content="Better than H-JEPA in all 6 settings: average success 52.4% to 76.9% with 13 to 79 times less planning compute. Every world-model weight stays frozen.">
 <meta property="og:image" content="https://daybraeklaxry.github.io/criticjepa/assets/maze/maze-a-poster.jpg">
 <link rel="canonical" href="https://daybraeklaxry.github.io/criticjepa/">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="preload" href="assets/inter.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="styles.css?v=202611201113">
+<link rel="stylesheet" href="styles.css?v=202611201302">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -82,7 +82,7 @@
   <h2 class="mega">Better everywhere.<br>For a fraction of the compute.</h2>
   <div class="stats">
     <div><b>6 / 6</b><span>settings improved over H-JEPA</span></div>
-    <div><b>+21.5</b><span>points on Visual AntMaze</span></div>
+    <div><b>+24.5</b><span>points of average success, 52.4% → 76.9%</span></div>
     <div><b>13–79×</b><span>less planning compute</span></div>
     <div><b>0</b><span>weights changed in 18 frozen world models</span></div>
   </div>
@@ -127,7 +127,7 @@
     <p class="pcap">Lower is better. The green line is CriticJEPA-0: choosing among 100 proposals with no gradient steps at all beats every amount of search.</p>
   </div>
   <div class="why">
-    <figure class="eqfig" style="text-align:center;margin:8px 0 30px"><img src="assets/eq-gradient.svg?v=202611201113" width="640" height="77" style="width:min(100%,640px);height:auto" alt="Minus the gradient of the predicted cost equals minus the gradient of the true cost, which is real progress, plus the gradient of the model error epsilon, which is progress at fooling the model."></figure>
+    <figure class="eqfig" style="text-align:center;margin:8px 0 30px"><img src="assets/eq-gradient.svg?v=202611201302" width="640" height="77" style="width:min(100%,640px);height:auto" alt="Minus the gradient of the predicted cost equals minus the gradient of the true cost, which is real progress, plus the gradient of the model error epsilon, which is progress at fooling the model."></figure>
     <p>Write the predicted cost as the true cost minus the model's error ε. Every gradient step follows both directions, and nothing stops it from following the second. The trace is visible in the maze: failed runs put their subgoals near or inside walls about twice as often.</p>
     <div class="wall">
       <div class="wrow head"><span></span><span>Successful runs</span><span>Failed runs</span></div>
@@ -208,7 +208,7 @@
 </section>
 </main>
 <footer class="foot"><svg class="logo"><use href="#i-logo"/></svg><span>CriticJEPA · Tsinghua University · Zhongguancun Academy · Manifold AI</span></footer>
-<script src="demos.js?v=202611201113"></script>
-<script src="app.js?v=202611201113"></script>
+<script src="demos.js?v=202611201302"></script>
+<script src="app.js?v=202611201302"></script>
 </body>
 </html>
