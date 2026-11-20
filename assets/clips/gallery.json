@@ -1,0 +1,79 @@
+[
+ {
+  "id": "pusht-024",
+  "env": "pusht",
+  "fps": 15,
+  "budget": 90,
+  "hit": 75
+ },
+ {
+  "id": "pusht-046",
+  "env": "pusht",
+  "fps": 15,
+  "budget": 90,
+  "hit": 75
+ },
+ {
+  "id": "pusht-020",
+  "env": "pusht",
+  "fps": 15,
+  "budget": 90,
+  "hit": 77
+ },
+ {
+  "id": "pusht-036",
+  "env": "pusht",
+  "fps": 15,
+  "budget": 90,
+  "hit": 75
+ },
+ {
+  "id": "cube-006",
+  "env": "cube",
+  "fps": 8,
+  "budget": 30,
+  "hit": 15
+ },
+ {
+  "id": "cube-028",
+  "env": "cube",
+  "fps": 8,
+  "budget": 30,
+  "hit": 16
+ },
+ {
+  "id": "cube-020",
+  "env": "cube",
+  "fps": 8,
+  "budget": 30,
+  "hit": 17
+ },
+ {
+  "id": "cube-045",
+  "env": "cube",
+  "fps": 8,
+  "budget": 30,
+  "hit": 15
+ },
+ {
+  "id": "fourroom-023",
+  "env": "fourroom",
+  "fps": 20,
+  "budget": 210,
+  "hit": 115
+ },
+ {
+  "id": "fourroom-019",
+  "env": "fourroom",
+  "fps": 20,
+  "budget": 210,
+  "hit": 146
+ },
+ {
+  "id": "fourroom-029",
+  "env": "fourroom",
+  "fps": 20,
+  "budget": 210,
+  "hit": 171
+ }
+]
