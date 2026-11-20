@@ -19,7 +19,7 @@ const nav = $('.nav');
 addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 10), { passive: true });
 const navLinks = $$('.nav nav a');
 const navIO = new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && navLinks.forEach((a) => a.classList.toggle('on', a.hash === '#' + e.target.id))), { rootMargin: '-40% 0px -55% 0px' });
-['demo', 'insight', 'method', 'results', 'gallery', 'cite'].forEach((id) => navIO.observe(document.getElementById(id)));
+['demo', 'results', 'insight', 'method', 'gallery', 'cite'].forEach((id) => navIO.observe(document.getElementById(id)));
 
 /* ================= synced comparison player ================= */
 // Each video: left half H-JEPA, right half CriticJEPA, one frame per environment step, then a short hold.
@@ -321,37 +321,29 @@ function drawK() {
     svg(kc, 'text', { x: x(k), y: y(KV[i]) + (i === 0 ? 26 : -14), 'text-anchor': i === 4 ? 'end' : 'middle', class: i === 1 ? 'strong' : '' }, KV[i].toFixed(1));
   });
 }
-const ROWS = [['AntMaze', 'three levels', 67.6, 78.7, 89.1, 26], ['Push-T', 'two levels', 43.3, 52.0, 57.3, 79], ['Push-T', 'three levels', 9.3, 18.7, 22.7, 13], ['Cube', 'two levels', 49.3, 100, 92.0, 44], ['Cube', 'three levels', 48.7, 100, 100, 50], ['FourRoom', 'three levels', 96.0, 100, 100, 14]];
-const db = $('#dumbbell');
-function drawDumb() {
-  db.replaceChildren();
-  const row = (cls) => { const d = document.createElement('div'); d.className = cls; db.append(d); return d; };
-  const ax = row('drow axis'); ax.append(document.createElement('span')); const as = document.createElementNS(NS, 'svg'); ax.append(as, document.createElement('span'));
-  const items = ROWS.map((r) => { const d = row('drow'); d.innerHTML = `<div class="env">${r[0]}<small>${r[1]}</small></div>`; const s = document.createElementNS(NS, 'svg'); const q = document.createElement('div'); q.className = 'ratio'; q.textContent = `${r[5]}×`; d.append(s, q); return [r, s]; });
-  const W = as.getBoundingClientRect().width || 400, x = (v) => 8 + ((W - 16) * v) / 100;
-  as.setAttribute('viewBox', `0 0 ${W} 22`); as.style.height = '22px';
-  for (const v of [0, 25, 50, 75, 100]) svg(as, 'text', { x: x(v), y: 16, 'text-anchor': v === 0 ? 'start' : v === 100 ? 'end' : 'middle' }, v + '%');
+const ROWS = [['Visual AntMaze', 'three levels', 67.6, 89.1, 26], ['Push-T', 'two levels', 43.3, 57.3, 79], ['Push-T', 'three levels', 9.3, 22.7, 13], ['Cube', 'two levels', 49.3, 92.0, 44], ['Cube', 'three levels', 48.7, 100, 50], ['FourRoom', 'three levels', 96.0, 100, 14]];
+const hb = $('#headBars');
+function drawHead() {
+  hb.replaceChildren();
   const f = (v) => (v % 1 ? v.toFixed(1) : String(v));
-  for (const [r, s] of items) {
-    s.setAttribute('viewBox', `0 0 ${W} 54`);
-    for (const v of [0, 25, 50, 75, 100]) svg(s, 'line', { x1: x(v), x2: x(v), y1: 18, y2: 38, stroke: C.rule });
-    const [, , h, c0, c5] = r, lo = Math.min(h, c0, c5), hi = Math.max(h, c0, c5);
-    svg(s, 'line', { x1: x(lo), x2: x(hi), y1: 28, y2: 28, stroke: C.cjSoft, 'stroke-width': 5, 'stroke-linecap': 'round' });
-    svg(s, 'circle', { cx: x(h), cy: 28, r: 7, fill: C.hj });
-    svg(s, 'circle', { cx: x(c0), cy: 28, r: 9, fill: '#fff', stroke: C.cj, 'stroke-width': 3 });
-    svg(s, 'circle', { cx: x(c5), cy: 28, r: 6, fill: C.cj });
-    const near = hi - h < 14, edge = (v) => (v > 94 ? 'end' : 'middle'), nx = (v) => x(v) + (v > 94 ? 10 : 0);
-    svg(s, 'text', { x: x(h) - (near ? 12 : 0), y: near ? 53 : 12, 'text-anchor': near ? 'end' : 'middle', style: `fill:${C.hj}` }, f(h));
-    svg(s, 'text', { x: nx(c5), y: 12, 'text-anchor': edge(c5), style: `fill:${C.cj}` }, c0 === c5 ? `${f(c5)} (both)` : f(c5));
-    if (c0 !== c5) svg(s, 'text', { x: nx(c0), y: 53, 'text-anchor': edge(c0), style: `fill:${C.cj}` }, f(c0));
+  for (const [env, lv, h, c, x] of ROWS) {
+    const r = document.createElement('div'); r.className = 'hrow';
+    r.innerHTML = `<div class="env">${env}<small>${lv}</small></div>
+      <div class="pair"><div class="hb hj"><i style="--w:${h}%"></i><span>${f(h)}%</span></div><div class="hb c5"><i style="--w:${c}%"></i><span>${f(c)}%</span></div></div>
+      <div class="xb"><svg><use href="#i-bolt"/></svg><b>${x}×</b><span>less</span></div>`;
+    hb.append(r);
   }
+  const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { hb.classList.add('in'); io.disconnect(); } }, { threshold: 0.05 });
+  if (reduced) hb.classList.add('in');
+  io.observe(hb);
 }
+drawHead();
 
 $('#copyBib').addEventListener('click', async () => {
   const b = $('#copyBib');
   try { await navigator.clipboard.writeText($('#bibtex').textContent); b.textContent = 'Copied'; } catch { b.textContent = 'Select to copy'; }
   setTimeout(() => (b.textContent = 'Copy'), 1600);
 });
-function drawAll() { drawDiag(); drawScatter(); drawK(); drawDumb(); }
+function drawAll() { drawDiag(); drawScatter(); drawK(); }
 let rz = 0; addEventListener('resize', () => { cancelAnimationFrame(rz); rz = requestAnimationFrame(drawAll); });
 drawAll();
