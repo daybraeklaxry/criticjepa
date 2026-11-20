@@ -4,240 +4,209 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CriticJEPA: World Models Are Better Critics Than Optimizers</title>
-<meta name="description" content="Use a frozen world model to judge plans, not to optimize them. CriticJEPA pairs goal-conditioned flow proposals with frozen rollout selection across a hierarchy.">
+<meta name="description" content="A frozen world model is a reliable judge of plans long after its gradients stop being a reliable guide. CriticJEPA lets it judge.">
 <meta property="og:title" content="CriticJEPA: World Models Are Better Critics Than Optimizers">
-<meta property="og:description" content="+21.5 points on Visual AntMaze with 26× less planning compute. Every world-model weight stays frozen.">
-<meta property="og:image" content="https://daybraeklaxry.github.io/criticjepa/assets/demos/ant-044-poster.jpg">
+<meta property="og:description" content="+21.5 points on Visual AntMaze at 1/26 of the planning compute. Every world-model weight stays frozen.">
+<meta property="og:image" content="https://daybraeklaxry.github.io/criticjepa/assets/maze/maze-a-poster.jpg">
 <link rel="canonical" href="https://daybraeklaxry.github.io/criticjepa/">
 <link rel="preload" href="assets/newsreader.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="styles.css?v=20261120a">
+<link rel="stylesheet" href="styles.css?v=20261120c">
 </head>
 <body>
 
-<nav class="topnav" aria-label="Sections">
-  <a class="brand" href="#top">CriticJEPA</a>
-  <div class="navlinks">
-    <a href="#demo">Demo</a><a href="#insight">Insight</a><a href="#method">Method</a><a href="#results">Results</a><a href="#cite">Cite</a>
-  </div>
-</nav>
-
-<header class="hero" id="top">
- <div class="hero-inner">
-  <div class="hero-text">
-    <p class="eyebrow">Planning with frozen visual world models</p>
-    <h1>CriticJEPA</h1>
-    <p class="subtitle">World models are better <em>critics</em> than <span class="strike">optimizers</span>.</p>
-    <p class="hero-pitch">Use the frozen model to <b>pick</b> among proposed plans, not to <b>build</b> them with its gradients. +21.5 points on AntMaze at 1/26 of the planning compute.</p>
-    <p class="authors">
-      <span>Xvyuan Liu<sup>1*</sup></span><span>Jianjie Fang<sup>1*</sup></span><span>Honglin Zhang<sup>1*</sup></span><span>Zhaolu Wang<sup>2</sup></span><span>Xin Zhang<sup>3</sup></span><span>Wei Wu<sup>3</sup></span><span>Fengli Xu<sup>1</sup></span><span>Chen Gao<sup>1†</sup></span><span>Yong Li<sup>1†</sup></span>
-    </p>
-    <p class="affil"><sup>1</sup>Tsinghua University&nbsp; <sup>2</sup>Zhongguancun Academy&nbsp; <sup>3</sup>Manifold AI<br><span class="note"><sup>*</sup>Equal contribution&nbsp; <sup>†</sup>Corresponding authors</span></p>
-    <div class="logos" aria-label="Institutions">
-      <span><img src="assets/tsinghua.webp" alt="Tsinghua University"></span>
-      <span><img class="seal" src="assets/zhongguancun-academy.jpg" alt="Zhongguancun Academy"></span>
-      <span><img src="assets/manifold-ai.webp" alt="Manifold AI"></span>
-    </div>
-  </div>
-
-  <section id="demo" class="player" aria-labelledby="demo-h">
-    <h2 id="demo-h" class="player-h">Same frozen model. Same start. Same goal. <span>Only the planner differs.</span></h2>
-    <div class="screen-labels" aria-hidden="true">
-      <div class="lab hj"><b>H-JEPA</b><span>gradient search</span></div>
-      <div class="lab cj"><b id="armName">CriticJEPA-5</b><span>propose, polish, select</span></div>
-    </div>
-    <div class="videobox">
-      <video id="demoVideo" muted playsinline preload="metadata" aria-describedby="demoCaption"></video>
-      <figure class="goalchip"><img id="goalImg" alt="Goal observation shared by both planners"><figcaption>Goal</figcaption></figure>
-      <div class="status left" id="statusL"></div>
-      <div class="status right" id="statusR"></div>
-    </div>
-    <div class="transport">
-      <button id="playBtn" class="play" aria-label="Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="playIcon" d="M8 5v14l11-7z"/></svg></button>
-      <div class="scrub">
-        <input id="scrub" type="range" min="0" max="350" value="0" aria-label="Environment step">
-        <div class="hitmark" id="hitMark"><span>goal reached</span></div>
-      </div>
-      <output id="stepOut" class="stepout">Step 0 / 350</output>
-    </div>
-    <div class="cases" role="group" aria-label="Choose a task" id="cases"></div>
-    <p class="player-note" id="demoCaption"><span id="factLine"></span> <span id="frLegend" hidden><i class="dot red"></i>agent <i class="dot blue"></i>distractor.</span> Recorded rollouts from identical simulator states with one frozen H-JEPA model. These tasks were picked where H-JEPA fails and CriticJEPA succeeds. Rates over all tasks are in <a href="#results">Results</a>.</p>
-  </section>
- </div>
+<header class="top">
+  <a class="brand" href="#">CriticJEPA</a>
+  <nav aria-label="Sections"><a href="#demo">Demo</a><a href="#insight">Insight</a><a href="#method">Method</a><a href="#results">Results</a><a href="#cite">Citation</a></nav>
 </header>
 
-<!-- ============ TL;DR ============ -->
-<section class="tldr" aria-label="Summary">
-  <p class="big">A learned world model can tell which of several plans is better long after its gradients stop telling you how to make one better. <strong>So let it judge, and let something else propose.</strong></p>
-  <div class="kpis">
-    <div><b>89.1%</b><span>AntMaze success<br>vs 67.6% for H-JEPA</span></div>
-    <div><b>26×</b><span>less planning compute<br>for that gain</span></div>
-    <div><b>18</b><span>frozen world models<br>in 4 environments</span></div>
-    <div><b>0</b><span>world-model weights<br>updated</span></div>
+<main>
+<section class="col title">
+  <h1>World models are better critics than optimizers</h1>
+  <dl class="meta">
+    <div><dt>Authors</dt><dd>Xvyuan Liu<sup>1*</sup>, Jianjie Fang<sup>1*</sup>, Honglin Zhang<sup>1*</sup>, Zhaolu Wang<sup>2</sup>, Xin Zhang<sup>3</sup>, Wei Wu<sup>3</sup>, Fengli Xu<sup>1</sup>, Chen Gao<sup>1†</sup>, Yong Li<sup>1†</sup></dd></div>
+    <div><dt>Affiliations</dt><dd><sup>1</sup>Tsinghua University &nbsp;<sup>2</sup>Zhongguancun Academy &nbsp;<sup>3</sup>Manifold AI</dd></div>
+    <div><dt>Notes</dt><dd><sup>*</sup>Equal contribution &nbsp;<sup>†</sup>Corresponding authors</dd></div>
+  </dl>
+  <div class="logos" aria-label="Institutions">
+    <img src="assets/tsinghua.webp" alt="Tsinghua University">
+    <img class="seal" src="assets/zhongguancun-academy.jpg" alt="Zhongguancun Academy">
+    <img src="assets/manifold-ai.webp" alt="Manifold AI">
   </div>
 </section>
 
-<!-- ============ ABSTRACT ============ -->
-<section id="abstract" class="sec narrow">
-  <h2 class="label">Abstract</h2>
-  <p class="abstract">Visual world models enable goal-directed planning by predicting action outcomes. Gradient-based planners optimize actions to lower predicted goal cost, but continued optimization can exploit prediction errors after execution stops improving. Comparing plans requires informative relative scores; improving them also requires reliable update directions. Exact-state execution reveals that a frozen hierarchical world model ranks goal-conditioned proposals even when its rankings among outputs of prolonged gradient search are uninformative. Effective planning pairs goal-directed candidates with predictions that distinguish their outcomes. We introduce CriticJEPA, which learns goal-conditioned flow proposals from reward-free trajectories and uses frozen rollouts to select among them at every hierarchy level. Forward selection forms a complete planner; short anchored updates refine candidates before selection. Across visual navigation and manipulation, CriticJEPA increases success at a fraction of the planning compute, transferring shared settings across independently trained models, hierarchy depths, and unseen tasks while keeping every world-model weight fixed.</p>
+<!-- ============ HERO DEMO ============ -->
+<section id="demo" class="wide" aria-label="AntMaze rollouts">
+  <div class="media maze" id="mazePlayer">
+    <div class="vid">
+      <video muted playsinline preload="auto"></video>
+      <span class="tag l">H-JEPA</span><span class="tag r">CriticJEPA</span>
+      <span class="st l"></span><span class="st r"></span>
+      <span class="overlay"></span>
+    </div>
+    <div class="bar">
+      <button class="pp" aria-label="Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>
+      <div class="scrub"><input type="range" min="0" value="0" aria-label="Environment step"><i class="hit"></i></div>
+      <output class="step"></output>
+    </div>
+  </div>
+  <div class="under">
+    <div class="picker" role="group" aria-label="Choose a route" id="mazePicker"></div>
+    <p class="legend"><span><i class="ln hj"></i>H-JEPA path</span><span><i class="ln cj"></i>CriticJEPA path</span><span><i class="st0"></i>start</span><span><i class="gl"></i>goal</span></p>
+  </div>
+  <p class="col cap" id="mazeCap">Official Visual AntMaze tasks with the H-JEPA budget of 350 steps. Both planners run the same frozen three-level world model from the same simulator state toward the same goal. Shown at one video frame per control step, re-rendered top-down from the recorded joint states. We chose these tasks to show behavior. Rates over all tasks are in Results.</p>
 </section>
 
-<!-- ============ INSIGHT ============ -->
-<section id="insight" class="sec">
-  <h2 class="label">Insight</h2>
-  <p class="sec-lede">Three measurements on one frozen AntMaze hierarchy. Every plan is executed from the exact same saved simulator state, so prediction and reality can be compared plan by plan.</p>
+<!-- ============ LEAD ============ -->
+<section class="col lead" id="insight">
+  <p class="dropcap">A visual world model predicts what will happen if an agent acts. Planners usually ask it two questions at once: <em>how good is this plan</em>, and <em>which way should the plan change to get better</em>. The second question is answered by following the model's gradients.</p>
+  <p>These turn out to be very different jobs. The same frozen model that can tell good plans from bad ones gives update directions that, after a few steps, mostly improve <em>its own opinion</em> of the plan rather than the plan itself. So we stopped asking the world model to optimize. CriticJEPA lets a learned proposer write the plans and keeps the world model as the judge.</p>
+  <div class="kpis">
+    <div><b>+21.5</b><span>points of AntMaze success</span></div>
+    <div><b>1/26</b><span>of the planning compute</span></div>
+    <div><b>18</b><span>frozen world models tested</span></div>
+    <div><b>0</b><span>world-model weights changed</span></div>
+  </div>
+</section>
 
-  <article class="finding">
-    <div class="finding-text">
-      <span class="num">01</span>
-      <h3>Optimizing against a model teaches the plan to fool it.</h3>
-      <p>Gradient search keeps lowering the error the model <em>predicts</em>. The error the agent actually <em>reaches</em> stops improving after about 10 steps. The gap between the two is optimism, and it nearly doubles.</p>
-      <div class="eq" aria-label="Gradient decomposition: minus gradient of predicted cost equals minus gradient of true cost plus gradient of optimism">
-        <div class="eq-line"><span class="t">−∇C<sub>pred</sub></span><span class="op">=</span><span class="t good">−∇C<sub>true</sub></span><span class="op">+</span><span class="t bad">∇ε</span></div>
-        <div class="eq-key"><span class="good">real progress</span><span class="bad">progress at fooling the model</span></div>
-      </div>
-      <p class="small">Write predicted cost as true cost minus optimism ε. Every gradient update then mixes both terms, and nothing stops search from following the second.</p>
-    </div>
-    <figure class="finding-fig card">
-      <div class="seg" role="group" aria-label="H-JEPA gradient steps" id="diagSeg">
-        <span>Gradient steps</span><button data-step="0">0</button><button data-step="1">10</button><button data-step="2">30</button><button data-step="3" aria-pressed="true">90</button>
-      </div>
-      <div class="readouts" aria-live="polite">
-        <div class="ro exe"><span>Executed</span><b id="roExe">23.4</b></div>
-        <div class="ro pre"><span>Predicted</span><b id="roPre">6.7</b></div>
-        <div class="ro opt"><span>Optimism</span><b id="roOpt">16.7</b></div>
-      </div>
-      <svg id="diagChart" class="chart" role="img" aria-labelledby="dcT"><title id="dcT">Executed endpoint error is 25.3, 23.0, 22.8 and 23.4 after 0, 10, 30 and 90 gradient steps. Predicted error falls from 16.7 to 9.5, 7.1 and 6.7. CriticJEPA-0, choosing among 100 proposals with no gradient steps, reaches 20.2.</title></svg>
-      <figcaption>Endpoint error over one replanning window at 720 AntMaze states, lower is better. Dashed blue: CriticJEPA-0 picking among 100 proposals with zero gradient steps reaches lower executed error than any amount of search.</figcaption>
-    </figure>
-  </article>
+<!-- ============ 1 ============ -->
+<section class="col chapter">
+  <p class="num">01</p>
+  <h2>The model already knows the way</h2>
+  <p>Run the H-JEPA planner three times on the same 50 AntMaze tasks with the same frozen model, changing only the random start of its search. Each run solves about 72% of the tasks. Together, the three runs solve 92%.</p>
+  <p>So for almost every task, this frozen model <em>can</em> guide the ant to the goal. A single run of gradient search just does not find that route reliably.</p>
+</section>
+<figure class="fig col-fig">
+  <div class="figbody">
+    <div class="seg" role="group" aria-label="Restart" id="runSeg"><button data-run="0">Run 1</button><button data-run="1">Run 2</button><button data-run="2">Run 3</button><button data-run="3" aria-pressed="true">Any of three</button></div>
+    <p class="big-read" id="runRead" aria-live="polite"></p>
+    <ol id="grid" class="grid" aria-label="50 AntMaze tasks in original order"></ol>
+  </div>
+  <figcaption><span class="sw ink"></span>solved <span class="sw out"></span>failed. One frozen H-JEPA model, 50 official tasks. "Any of three" is coverage across restarts, not the success rate of a single run.</figcaption>
+</figure>
 
-  <article class="finding flip">
-    <div class="finding-text">
-      <span class="num">02</span>
-      <h3>The same model is a fine judge. It just needs a good menu.</h3>
-      <p>Show the frozen model eight plans and ask it to pick. On search outputs it guesses at chance. On plans retrieved from the dataset it ranks well, yet its pick is poor because those plans ignore the goal. On goal-conditioned proposals it ranks well <em>and</em> its pick is the best of all.</p>
-      <p class="callout">A critic is only as good as the options it is given.</p>
+<!-- ============ 2 ============ -->
+<section class="col chapter">
+  <p class="num">02</p>
+  <h2>Search learns to fool the model</h2>
+  <p>To see why, we froze the simulator at 720 AntMaze states, let gradient search run for 0, 10, 30 and 90 steps, and then actually executed each resulting plan from the exact same state.</p>
+  <p>The first 10 steps help. After that, the error the model <em>predicts</em> keeps falling while the error the agent actually <em>reaches</em> stops improving. The gap between the two, the model's optimism, nearly doubles.</p>
+</section>
+<figure class="fig col-fig">
+  <div class="figbody">
+    <div class="seg" role="group" aria-label="Gradient steps" id="diagSeg"><span>gradient steps</span><button data-step="0">0</button><button data-step="1">10</button><button data-step="2">30</button><button data-step="3" aria-pressed="true">90</button></div>
+    <div class="reads" aria-live="polite">
+      <div><span>executed</span><b id="roExe"></b></div>
+      <div class="hj"><span>predicted</span><b id="roPre"></b></div>
+      <div class="hj soft"><span>optimism</span><b id="roOpt"></b></div>
     </div>
-    <figure class="finding-fig card">
-      <div class="seg" role="group" aria-label="Metric" id="candSeg">
-        <button data-m="rho" aria-pressed="true">Ranking</button><button data-m="top1">Picks the best</button><button data-m="err">Chosen plan</button><button data-m="opt">Optimism</button>
-      </div>
-      <p class="metric-q" id="candQ"></p>
-      <div class="cbars" id="candBars"></div>
-      <figcaption>300 AntMaze states, eight candidates per source, every candidate executed. Dataset plans are retrieved by start state only.</figcaption>
-    </figure>
-  </article>
+    <svg id="diagChart" class="chart" role="img" aria-labelledby="dcT"><title id="dcT">Executed endpoint error is 25.3, 23.0, 22.8 and 23.4 after 0, 10, 30 and 90 gradient steps. Predicted error falls from 16.7 to 9.5, 7.1 and 6.7. CriticJEPA-0, choosing among 100 proposals with no gradient steps, reaches 20.2.</title></svg>
+  </div>
+  <figcaption>Endpoint error over one replanning window, lower is better. The green line is CriticJEPA-0: choosing among 100 proposals with zero gradient steps beats every amount of search.</figcaption>
+</figure>
+<section class="col chapter tight">
+  <p>The reason is simple. Write the model's predicted cost as the true cost minus an error term ε. Every gradient step then follows two directions at once:</p>
+  <div class="eq" aria-label="minus gradient of predicted cost equals minus gradient of true cost plus gradient of epsilon">
+    <span>−∇C<sub>pred</sub></span><span class="o">=</span><span class="g">−∇C<sub>true</sub></span><span class="o">+</span><span class="r">∇ε</span>
+  </div>
+  <p class="eqkey"><span class="g">real progress</span><span class="r">progress at fooling the model</span></p>
+  <p>Nothing stops search from following the second. In AntMaze this has a visible signature: on tasks whose outcome flips between restarts, the failed runs place their top-level subgoals near or inside walls about twice as often as the successful ones.</p>
+  <div class="wall">
+    <div class="wrow"><span>near a wall</span><span class="bars"><i class="ok" style="--v:7.1"></i><b>7.1%</b></span><span class="bars"><i class="bad" style="--v:14.3"></i><b>14.3%</b></span></div>
+    <div class="wrow"><span>inside a wall</span><span class="bars"><i class="ok" style="--v:0.9"></i><b>0.9%</b></span><span class="bars"><i class="bad" style="--v:2.3"></i><b>2.3%</b></span></div>
+    <div class="wrow head"><span></span><span>successful runs</span><span>failed runs</span></div>
+  </div>
+</section>
 
-  <article class="finding">
-    <div class="finding-text">
-      <span class="num">03</span>
-      <h3>The model already knows the way. Search finds it by luck.</h3>
-      <p>Rerun H-JEPA three times on the same 50 tasks with the same frozen model. Each run solves about 72%. Together they cover 92%. The successful behavior is reachable with this model. Gradient search just does not recover it reliably.</p>
-      <div class="wallstat">
-        <p class="kicker">Where failed searches send the agent</p>
-        <div class="wrow"><span>Subgoals near a wall</span><span class="wbars"><i class="wb ok" style="--v:7.1"></i><b>7.1%</b><i class="wb bad" style="--v:14.3"></i><b>14.3%</b></span></div>
-        <div class="wrow"><span>Subgoals inside a wall</span><span class="wbars"><i class="wb ok" style="--v:0.9"></i><b>0.9%</b><i class="wb bad" style="--v:2.3"></i><b>2.3%</b></span></div>
-        <p class="wkey"><i class="ok"></i>successful runs <i class="bad"></i>failed runs. Top-level subgoals decoded to maze coordinates on the 24 tasks whose outcome flips. CriticJEPA-0 cuts in-wall subgoals from 2.31% to 0.31% over all 50 tasks.</p>
-      </div>
-    </div>
-    <figure class="finding-fig card">
-      <div class="seg" role="group" aria-label="Restart" id="runSeg">
-        <button data-run="0">Run 1</button><button data-run="1">Run 2</button><button data-run="2">Run 3</button><button data-run="3" aria-pressed="true">Any of three</button>
-      </div>
-      <p class="runread" id="runRead" aria-live="polite"></p>
-      <ol id="grid" class="grid" aria-label="50 AntMaze tasks in original order"></ol>
-      <figcaption><span class="key"><i class="s"></i>solved <i class="f"></i>failed</span> One frozen H-JEPA model, 50 official tasks. "Any of three" is coverage, not the success rate of a single deployable run.</figcaption>
-    </figure>
-  </article>
+<!-- ============ 3 ============ -->
+<section class="col chapter">
+  <p class="num">03</p>
+  <h2>A good judge needs good options</h2>
+  <p>Comparing plans is a different job. A shared prediction error shifts every candidate's score equally and leaves the ranking intact. So we asked the same frozen model to pick the best of eight plans, executed all eight from the same state, and checked its pick.</p>
+  <p>On search outputs, it picks at chance. On plans retrieved from the training data, it ranks best of all, yet its pick ends far from the goal, because those plans were never aimed at this goal. On goal-conditioned proposals, it ranks well <em>and</em> its pick lands closest.</p>
+</section>
+<figure class="fig col-fig">
+  <div class="figbody">
+    <div class="seg" role="group" aria-label="Metric" id="candSeg"><button data-m="rho" aria-pressed="true">ranks plans</button><button data-m="top1">picks the best</button><button data-m="err">chosen plan's error</button><button data-m="opt">optimism</button></div>
+    <p class="q" id="candQ"></p>
+    <div class="cbars" id="candBars"></div>
+  </div>
+  <figcaption>300 AntMaze states, eight candidates per source, every candidate executed. Retrieved plans match the current state only.</figcaption>
+</figure>
+<section class="col chapter tight">
+  <p class="pull">The world model is a reliable critic. It just should not be the one writing the plans.</p>
 </section>
 
 <!-- ============ METHOD ============ -->
-<section id="method" class="sec">
-  <h2 class="label">Method</h2>
-  <div class="method-head">
-    <h3 class="display">Propose. Polish. Select.</h3>
-    <p>A flow head trained on reward-free trajectories proposes goal-directed plans. A few anchored gradient steps can tidy each one. The frozen world model rolls every candidate forward and keeps the best. The model is never asked to invent a plan, and never retrained.</p>
-  </div>
-
-  <figure class="card methodviz">
-    <div class="seg" role="group" aria-label="Planning stage" id="mSeg">
-      <button data-ph="0" aria-pressed="true"><b>1</b> Propose</button><button data-ph="1"><b>2</b> Polish</button><button data-ph="2"><b>3</b> Select</button><button id="mPlay" class="ghost">▶ Play</button>
-    </div>
-    <div class="mgrid">
-      <svg id="mSvg" viewBox="0 0 640 360" role="img" aria-labelledby="mT"><title id="mT">Schematic of one planning step. Candidate plans fan out from the agent toward the goal, are adjusted slightly, then scored by predicted outcome. The best is executed.</title></svg>
-      <div class="mtext">
-        <p class="mstage" id="mStage"></p>
-        <p id="mBody"></p>
-        <p class="mnote">Schematic illustration, not data.</p>
-      </div>
-    </div>
-  </figure>
-
-  <div class="levels">
-    <div><b>Level 3</b><span>picks a distant subgoal</span></div>
-    <div><b>Level 2</b><span>picks a nearer subgoal</span></div>
-    <div><b>Level 1</b><span>picks motor commands</span></div>
-    <p>The same loop runs at every level of the hierarchy. With zero polish steps (CriticJEPA-0) it is already a complete planner.</p>
-  </div>
-
-  <figure class="paperfig">
-    <img src="assets/method.webp" alt="CriticJEPA method diagram from the paper. At each hierarchy level a flow head proposes plans, optional anchored updates refine them, and the frozen world model scores rollouts to select one. Selected macro-actions become subgoals for lower levels and primitive controls run at the bottom." loading="lazy">
-    <figcaption>Method figure from the paper.</figcaption>
-  </figure>
-
-  <p class="scope">H-JEPA is our testbed, and a strong one. The point is about roles: how a learned predictor is used inside a planner. All experiments here use H-JEPA hierarchies.</p>
+<section class="col chapter" id="method">
+  <p class="num">04</p>
+  <h2>CriticJEPA: propose, polish, select</h2>
+  <p>At every level of the hierarchy, a small flow-matching head trained on reward-free trajectories proposes a batch of plans aimed at the current goal. Optionally, a few gradient steps polish each plan, with an anchor that keeps it close to where it started. The frozen world model then imagines every candidate and keeps the one it predicts lands closest. The chosen high-level plan becomes the subgoal for the level below.</p>
 </section>
+<figure class="fig wide-fig">
+  <div class="figbody">
+    <div class="seg" role="group" aria-label="Planner" id="mSeg"><button data-mode="opt" aria-pressed="true">optimize with gradients</button><button data-mode="sel">propose and select</button><button class="play" id="mPlay">replay</button></div>
+    <div class="mwrap">
+      <svg id="mSvg" viewBox="0 0 660 340" role="img" aria-labelledby="mT"><title id="mT">Schematic comparison on a maze. Gradient optimization bends a single plan straight at the goal until its imagined path cuts through a wall while its predicted cost keeps falling. Proposal and selection draws several plans along the corridors and the frozen model picks the best one.</title></svg>
+      <div class="mtext"><p class="mh" id="mHead"></p><p id="mBody"></p><p class="mono small">schematic</p></div>
+    </div>
+  </div>
+</figure>
+<figure class="fig wide-fig paper">
+  <img src="assets/method.webp" alt="CriticJEPA method figure. At each hierarchy level a flow head proposes plans, optional anchored updates refine them, and the frozen world model scores rollouts to select one. Selected macro-actions become subgoals for lower levels and primitive controls run at the bottom." loading="lazy">
+  <figcaption>From the paper. With zero polish steps (CriticJEPA-0) forward selection is already a complete planner. H-JEPA is our testbed, and all experiments use H-JEPA hierarchies.</figcaption>
+</figure>
 
 <!-- ============ RESULTS ============ -->
-<section id="results" class="sec">
-  <h2 class="label">Results</h2>
-  <div class="res-head">
-    <h3 class="display">More goals for less compute.</h3>
-    <p>Every number averages three independently trained world models. One set of planning settings, chosen on one AntMaze model, is reused unchanged everywhere else.</p>
-  </div>
-
-  <div class="res-grid">
-    <figure class="card">
-      <div class="fig-title"><b>Visual AntMaze</b><span>success vs planning compute</span></div>
-      <svg id="scatter" class="chart" role="img" aria-labelledby="scT"><title id="scT">AntMaze success versus TFLOPs per episode on a log scale. H-JEPA 67.6% at 131.0. Single proposal 44.7% at 0.25. CriticJEPA-0 small 68.7% at 0.36. CriticJEPA-0 78.7% at 1.62. Two polish steps 88.2% at 2.51. CriticJEPA-5 89.1% at 5.11. Five steps with a larger pool 90.9% at 9.97.</title></svg>
-      <figcaption>Standard tasks, TFLOPs per episode on a log scale. On 50 unseen tasks: H-JEPA 74.7%, CriticJEPA-0 87.3%, CriticJEPA-5 92.0%.</figcaption>
-    </figure>
-
-    <figure class="card">
-      <div class="fig-title"><b>Polish briefly</b><span>success vs anchored steps K</span></div>
-      <svg id="kChart" class="chart" role="img" aria-labelledby="kT"><title id="kT">AntMaze success versus polish steps K with a fixed pool: 84.0 at 0, 94.7 at 2, 93.3 at 5, 91.3 at 10, 90.7 at 20. H-JEPA is 72.0 on the same model.</title></svg>
-      <figcaption>One AntMaze model, fixed pool. Two steps help most. Longer polishing gives some back, in line with finding 01.</figcaption>
-    </figure>
-  </div>
-
-  <figure class="card wide">
-    <div class="fig-title"><b>Across environments and hierarchy depths</b><span>success %, three models per row</span></div>
-    <div class="dumb-key"><span><i class="k hj"></i>H-JEPA</span><span><i class="k c0"></i>CriticJEPA-0</span><span><i class="k c5"></i>CriticJEPA-5</span><span class="rkey">less compute (CriticJEPA-5)</span></div>
-    <div id="dumbbell" class="dumbbell"></div>
-    <figcaption>On Cube and FourRoom, picking among proposals already solves every task. Polishing pays off where contact and long horizons make planning hard.</figcaption>
-  </figure>
+<section class="col chapter" id="results">
+  <p class="num">05</p>
+  <h2>More goals for less compute</h2>
+  <p>Every number averages three independently trained world models. One set of planning settings, chosen on one AntMaze model, is reused unchanged on the other models, environments, hierarchy depths, and on 50 AntMaze tasks created after the method was finished.</p>
 </section>
+<div class="wide-fig two">
+  <figure class="fig">
+    <div class="figbody"><p class="ft">Visual AntMaze</p><svg id="scatter" class="chart" role="img" aria-labelledby="scT"><title id="scT">AntMaze success versus TFLOPs per episode on a log scale. H-JEPA 67.6% at 131.0. Single proposal 44.7% at 0.25. CriticJEPA-0 small 68.7% at 0.36. CriticJEPA-0 78.7% at 1.62. Two polish steps 88.2% at 2.51. CriticJEPA-5 89.1% at 5.11. Larger pool 90.9% at 9.97.</title></svg></div>
+    <figcaption>Success vs planning compute per episode, log scale. On the 50 unseen tasks: 74.7% for H-JEPA, 92.0% for CriticJEPA-5.</figcaption>
+  </figure>
+  <figure class="fig">
+    <div class="figbody"><p class="ft">Polish, but briefly</p><svg id="kChart" class="chart" role="img" aria-labelledby="kT"><title id="kT">Success versus polish steps K with a fixed pool: 84.0 at 0, 94.7 at 2, 93.3 at 5, 91.3 at 10, 90.7 at 20. H-JEPA 72.0 on the same model.</title></svg></div>
+    <figcaption>One AntMaze model, fixed pool. Two anchored steps help most, and more steps give some of it back, exactly as finding 02 predicts.</figcaption>
+  </figure>
+</div>
+<figure class="fig wide-fig">
+  <div class="figbody">
+    <p class="ft">Across environments and hierarchy depths</p>
+    <p class="keys"><span><i class="k hj"></i>H-JEPA</span><span><i class="k c0"></i>CriticJEPA-0</span><span><i class="k c5"></i>CriticJEPA-5</span><span class="rk">compute saved</span></p>
+    <div id="dumbbell" class="dumbbell"></div>
+  </div>
+  <figcaption>Success rate, three models per row. On Cube and FourRoom, picking among proposals already solves every task. Polishing pays off where contact and long horizons make planning hard.</figcaption>
+</figure>
 
-<!-- ============ CITE ============ -->
-<section id="cite" class="sec narrow">
-  <h2 class="label">Citation</h2>
-  <div class="bib">
-    <button id="copyBib" class="copy">Copy</button>
+<section class="col chapter">
+  <p class="num">06</p>
+  <h2>Beyond navigation</h2>
+  <p>The same recipe, with the same settings, on contact-rich pushing and robotic manipulation.</p>
+</section>
+<div class="wide-fig two" id="moreDemos"></div>
+
+<section class="col chapter" id="cite">
+  <details class="abstract">
+    <summary>Abstract</summary>
+    <p>Visual world models enable goal-directed planning by predicting action outcomes. Gradient-based planners optimize actions to lower predicted goal cost, but continued optimization can exploit prediction errors after execution stops improving. Comparing plans requires informative relative scores; improving them also requires reliable update directions. Exact-state execution reveals that a frozen hierarchical world model ranks goal-conditioned proposals even when its rankings among outputs of prolonged gradient search are uninformative. Effective planning pairs goal-directed candidates with predictions that distinguish their outcomes. We introduce CriticJEPA, which learns goal-conditioned flow proposals from reward-free trajectories and uses frozen rollouts to select among them at every hierarchy level. Forward selection forms a complete planner; short anchored updates refine candidates before selection. Across visual navigation and manipulation, CriticJEPA increases success at a fraction of the planning compute, transferring shared settings across independently trained models, hierarchy depths, and unseen tasks while keeping every world-model weight fixed.</p>
+  </details>
+  <h2 class="small-h">Citation</h2>
+  <div class="bib"><button id="copyBib">copy</button>
 <pre id="bibtex">@misc{liu2026criticjepa,
   title  = {CriticJEPA: World Models Are Better Critics Than Optimizers},
   author = {Liu, Xvyuan and Fang, Jianjie and Zhang, Honglin and Wang, Zhaolu and
             Zhang, Xin and Wu, Wei and Xu, Fengli and Gao, Chen and Li, Yong},
   year   = {2026},
   note   = {Preprint}
-}</pre>
-  </div>
+}</pre></div>
 </section>
+</main>
 
-<footer class="foot">
-  <p>Tsinghua University · Zhongguancun Academy · Manifold AI</p>
-</footer>
-
-<script src="app.js?v=20261120a"></script>
+<footer class="col foot">Tsinghua University · Zhongguancun Academy · Manifold AI</footer>
+<script src="demos.js?v=20261120c"></script>
+<script src="app.js?v=20261120c"></script>
 </body>
 </html>
